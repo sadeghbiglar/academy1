@@ -304,12 +304,17 @@ class extends Component {
     public function students()
     {
         $students = Student::query()
-            ->where(function ($query) {
-                $query
-                    ->where('first_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('last_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('mobile', 'like', '%' . $this->search . '%');
+            ->when($this->search !== '', function ($query) {
+                $query->where(function ($query) {
+                    $query
+                        ->where('first_name', 'like', '%' . $this->search . '%')
+                        ->orWhere('last_name', 'like', '%' . $this->search . '%')
+                        ->orWhere('mobile', 'like', '%' . $this->search . '%');
+                });
             })
+            // Without a deterministic order MySQL may return rows in any order,
+            // which makes paginate() repeat or skip rows across pages.
+            ->orderByDesc('id')
             ->paginate(10);
 
         $students->getCollection()->transform(

@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Section;
+use App\Models\Student;
+use App\Models\Teacher;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -9,33 +12,27 @@ class extends Component {
 
     public function render()
     {
-        return <<<'HTML'
-        <div>
-            <h1 class="text-2xl font-bold mb-4">داشبورد</h1>
+        $user = auth()->user();
 
-            <div class="grid gap-4 md:grid-cols-2">
-                <div class="card bg-base-100 shadow">
-                    <div class="card-body">
-                        <p class="text-sm opacity-70">خوش آمدید</p>
-                        <p class="text-xl font-bold">{{ auth()->user()->display_name }}</p>
-                        <span class="badge badge-primary mt-2">{{ auth()->user()->role_label }}</span>
-                    </div>
-                </div>
+        // شمارش فقط برای نقش‌هایی که واقعاً به آن نیاز دارند. شمردن چیزی که
+        // کاربر اجازه دیدنش را ندارد نشت اطلاعات است، حتی اگر فقط عدد باشد.
+        $counts = [];
 
-                @if (auth()->user()->isTeacher() && auth()->user()->teacher)
-                    <div class="card bg-base-100 shadow">
-                        <div class="card-body">
-                            <p class="text-sm opacity-70">استاد</p>
-                            <p class="text-lg font-bold">
-                                {{ auth()->user()->teacher->first_name }} {{ auth()->user()->teacher->last_name }}
-                            </p>
-                            <p class="text-sm opacity-70">{{ auth()->user()->teacher->subject }}</p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-        </div>
-        HTML;
+        if ($user->canSee(Section::Students)) {
+            $counts['دانش‌آموزان'] = Student::count();
+        }
+
+        if ($user->canSee(Section::Teachers)) {
+            $counts['اساتید'] = Teacher::count();
+        }
+
+        // بخش‌هایی که این نقش می‌بیند ولی هنوز ساخته نشده‌اند
+        $pending = array_values(array_filter(
+            Section::menuOrder(),
+            fn (Section $section) => $user->canSee($section) && $section->url() === null,
+        ));
+
+        return view('pages.dashboard.index', compact('counts', 'pending'));
     }
 }
 ?>

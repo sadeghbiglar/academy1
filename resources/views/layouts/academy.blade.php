@@ -1,3 +1,9 @@
+@php
+    // layouts/academy یک قالب است و خودش namespace ندارد؛ بدون این use
+    // نمی‌تواند به enum ارجاع بدهد.
+    use App\Enums\Section;
+@endphp
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
@@ -6,9 +12,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>
-        {{ $title ?? 'آموزشگاه' }}
-    </title>
+    <title>{{ $title ?? 'آموزشگاه' }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -19,8 +23,10 @@
 
 <div class="drawer lg:drawer-open">
 
-    {{-- ناوبری: هر لینک فقط وقتی رندر می‌شود که نقش کاربر اجازه داشته باشد.
-         این تجربه کاربری است، نه امنیت — امنیت در لایه route اعمال می‌شود. --}}
+    {{-- ناوبری از روی Section ساخته می‌شود، نه با لیست دستیِ نام و مسیر.
+         لینکی که هنوز ساخته نشده رندر نمی‌شود، پس منو هیچ‌وقت لینک شکسته
+         ندارد؛ ولی بخشِ ساخته‌نشده در «نقشه راه» صفحه داشبورد دیده می‌شود تا
+         کاربر بداند چه چیزی در راه است. این تجربه کاربری است، نه امنیت. --}}
     <input id="app-drawer" type="checkbox" class="drawer-toggle">
 
     <div class="drawer-content">
@@ -51,36 +57,24 @@
                     <div class="font-bold">{{ auth()->user()->display_name }}</div>
                     <span class="badge badge-sm badge-primary mt-1">{{ auth()->user()->role_label }}</span>
                 </div>
-            @endauth
 
-            <ul class="menu p-2 gap-0.5 w-full grow">
-                @php
-                    $sections = [
-                        'dashboard' => ['داشبورد', 'dashboard'],
-                        'students' => ['دانش‌آموزان', 'students.index'],
-                        'teachers' => ['اساتید', 'teachers.index'],
-                        'finance' => ['مالی', 'finance.index'],
-                        'reports' => ['گزارش‌ها', 'reports.index'],
-                        'settings' => ['تنظیمات', 'settings.index'],
-                        'users' => ['کاربران', 'users.index'],
-                    ];
-                @endphp
+                <ul class="menu p-2 gap-0.5 w-full grow">
+                    @foreach (Section::menuOrder() as $section)
+                        @continue (! auth()->user()->canSee($section))
+                        @php $url = $section->url(); @endphp
 
-                @auth
-                    @foreach ($sections as $key => [$label, $routeName])
-                        @if (auth()->user()->canSee($key) && Route::has($routeName))
+                        @if ($url)
                             <li>
-                                <a href="{{ route($routeName) }}"
-                                   @class(['menu-active' => request()->routeIs($routeName)])>
-                                    {{ $label }}
+                                <a href="{{ $url }}"
+                                   @class(['menu-active' => request()->routeIs($section->routeName())])>
+                                    <span>{{ $section->icon() }}</span>
+                                    {{ $section->label() }}
                                 </a>
                             </li>
                         @endif
                     @endforeach
-                @endauth
-            </ul>
+                </ul>
 
-            @auth
                 <div class="p-3 border-t border-base-200">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

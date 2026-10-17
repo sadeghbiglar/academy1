@@ -64,6 +64,12 @@ class Student extends Model
         return $this->hasMany(Document::class);
     }
 
+    /** ثبت‌نام‌های دانش‌آموز در دوره‌ها. انتخاب واحد روی همین رابطه کار می‌کند. */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class);
+    }
+
     /** سرپرستی که با او تماس گرفته می‌شود؛ اگر تعیین نشده باشد، اولی. */
     public function primaryGuardian(): HasOne
     {

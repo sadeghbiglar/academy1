@@ -83,6 +83,18 @@ class CourseEnrollment extends Model
         });
     }
 
+    /** دوره‌هایی که درسِ این دوره را دارند و هنوز ثبت‌نام قطعی نشده‌اند. */
+    public function duplicatesSubjectOf(): bool
+    {
+        return Course::query()
+            ->where('subject_id', $this->course->subject_id)
+            ->where('id', '!=', $this->course_id)
+            ->whereHas('enrollments', fn ($query) => $query
+                ->where('student_id', $this->student_id)
+                ->where('status', EnrollmentStatus::Confirmed->value))
+            ->exists();
+    }
+
     /** مبلغ نهایی: شهریهٔ پایهٔ دوره منهای تخفیف. */
     public function calculateFinalFee(): int
     {
@@ -137,9 +149,54 @@ class CourseEnrollment extends Model
         }
     }
 
+    /**
+     * آیا ثبت‌نام در این دوره با ثبت‌نام‌های فعالِ دیگر دانش‌آموز تداخل دارد؟
+     *
+     * دو دوره با روز و ساعت یکسان یعنی دانش‌آموز باید در یک لحظه دو جا باشد.
+     * ثبت‌نام‌های خودِ همین دانش‌آموز بررسی می‌شوند، نه ثبت‌نام کل آموزشگاه —
+     * تداخل بین دو دانش‌آموز یک مشکل تقویم است، مانع ثبت‌نام هیچ‌کدام نیست.
+     */
+    public function conflictsWithExisting(): bool
+    {
+        $existingCourseIds = CourseEnrollment::query()
+            ->where('student_id', $this->student_id)
+            ->where('id', '!=', $this->id ?? 0)
+            ->where('status', EnrollmentStatus::Confirmed->value)
+            ->pluck('course_id')
+            ->all();
+
+        if ($existingCourseIds === []) {
+            return false;
+        }
+
+        $mine = $this->course->sessions()->get();
+
+        $theirs = ClassSession::query()
+            ->whereIn('course_id', $existingCourseIds)
+            ->get();
+
+        foreach ($mine as $session) {
+            foreach ($theirs as $other) {
+                if ($session->overlapsWith($other)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /** تبدیل رزرو به ثبت‌نام قطعی، با بررسی دوبارهٔ ظرفیت. */
     public function confirm(): self
     {
+        // تداخل زمانی در لحظهٔ تأیید بررسی می‌شود نه هنگام رزرو: بین آن دو ممکن
+        // است دانش‌آموز در دورهٔ دیگری ثبت‌نام کرده باشد
+        if ($this->conflictsWithExisting()) {
+            throw ValidationException::withMessages([
+                'status' => 'زمان این دوره با یکی از دوره‌های ثبت‌نام‌شدهٔ این دانش‌آموز تداخل دارد.',
+            ]);
+        }
+
         if ($this->course->isFull(exceptEnrollmentId: $this->getKey())) {
             throw ValidationException::withMessages([
                 'status' => 'ظرفیت دوره پر است.',

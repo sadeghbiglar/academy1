@@ -189,6 +189,20 @@ if (! function_exists('parse_integer')) {
     }
 }
 
+if (! function_exists('jalali_month_name')) {
+    /**
+     * نام فارسی ماه شمسی — برای عنوان تقویم و فیلترهای گزارش.
+     */
+    function jalali_month_name(int $month): string
+    {
+        return [
+            1 => 'فروردین', 2 => 'اردیبهشت', 3 => 'خرداد', 4 => 'تیر',
+            5 => 'مرداد', 6 => 'شهریور', 7 => 'مهر', 8 => 'آبان',
+            9 => 'آذر', 10 => 'دی', 11 => 'بهمن', 12 => 'اسفند',
+        ][$month] ?? '';
+    }
+}
+
 if (! function_exists('jalali_month_days')) {
     /**
      * تعداد روزهای یک ماه شمسی — برای ساخت تقویم انتخابگر تاریخ.

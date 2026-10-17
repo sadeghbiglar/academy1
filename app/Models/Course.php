@@ -23,6 +23,7 @@ class Course extends Model
 
     protected $fillable = [
         'title',
+        'code',
         'subject_id',
         'teacher_id',
         'capacity',
@@ -87,6 +88,12 @@ class Course extends Model
                     'session_duration' => 'مدت هر جلسه باید بیشتر از صفر باشد.',
                 ]);
             }
+
+            // کد خالی یعنی «هنوز کد ندارد»، نه رشتهٔ خالی. رشتهٔ خالی چند
+            // دورهٔ متفاوت را در جست‌وجوی کد یکی نشان می‌دهد
+            $code = trim((string) $course->code);
+
+            $course->code = $code === '' ? null : $code;
         });
     }
 

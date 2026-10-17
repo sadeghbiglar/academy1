@@ -129,6 +129,41 @@ class extends Component {
         ]);
     }
 
+    public ?int $viewingCourseId = null;
+
+    public bool $showViewModal = false;
+
+    /**
+     * جزئیات دوره، همراه با آمار ثبت‌نام.
+     *
+     * خود مدل به view داده می‌شود تا همهٔ فیلدهای ذخیره‌شده دیده شوند؛ فهرست
+     * دستی فیلدها بعداً با افزودن ستون فراموش می‌شود.
+     */
+    public function viewCourse(int $id): void
+    {
+        $this->viewingCourseId = Course::findOrFail($id)->id;
+
+        $this->showViewModal = true;
+    }
+
+    public function closeView(): void
+    {
+        $this->showViewModal = false;
+        $this->viewingCourseId = null;
+    }
+
+    #[Computed]
+    public function viewedCourse()
+    {
+        if ($this->viewingCourseId === null) {
+            return null;
+        }
+
+        return Course::query()
+            ->with(['subject', 'teacher', 'enrollments.student'])
+            ->find($this->viewingCourseId);
+    }
+
     public ?int $deletingCourseId = null;
 
     public bool $showDeleteModal = false;

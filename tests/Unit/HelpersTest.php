@@ -97,6 +97,14 @@ class HelpersTest extends TestCase
         $this->assertSame('abc123', to_english_digits('abc۱۲۳'));
     }
 
+    public function test_to_persian_digits_localises_the_separators(): void
+    {
+        // «۲,۰۰۰,۰۰۰» با کامای لاتین نیمه‌فارسی است، و در RTL جای نقطهٔ اعشار
+        // هم غلط دیده می‌شود
+        $this->assertSame('۲٬۰۰۰٬۰۰۰', to_persian_digits('2,000,000'));
+        $this->assertSame('۱۸٫۰', to_persian_digits('18.0'));
+    }
+
     public function test_to_persian_digits_is_for_display_only(): void
     {
         $this->assertSame('۱۴۰۳/۰۵/۱۲', to_persian_digits('1403/05/12'));

@@ -122,6 +122,12 @@
                     @scope('actions', $course)
                         <div class="flex items-center gap-1">
                             <x-button
+                                icon="o-eye"
+                                class="btn-sm btn-ghost"
+                                wire:click="viewCourse({{ $course->id }})"
+                                aria-label="مشاهده" />
+
+                            <x-button
                                 icon="o-pencil"
                                 class="btn-sm btn-ghost"
                                 wire:click="editCourse({{ $course->id }})"
@@ -146,6 +152,132 @@
     {{-- ── ایجاد دوره ──────────────────────────────────────────
          ورودی تاریخ فقط از JalaliDatePicker می‌آید؛ مقدار property همیشه
          میلادی ISO است و نمایش شمسی داخل خود کامپوننت انجام می‌شود. --}}
+    {{-- جزئیات دوره: هویت، زمان‌بندی، مالی. --}}
+    <x-modal wire:model="showViewModal" :title="$this->viewedCourse?->title ?? 'جزئیات دوره'" separator>
+        @if ($course = $this->viewedCourse)
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-base font-bold mb-3">هویت دوره</h3>
+                    <div class="grid gap-2 md:grid-cols-2">
+                        <p><span class="opacity-60">عنوان:</span> {{ $course->title }}</p>
+                        <p><span class="opacity-60">کد:</span> {{ $course->code ?? '—' }}</p>
+                        <p><span class="opacity-60">درس:</span> {{ $course->subject?->name ?? '—' }}</p>
+                        <p>
+                            <span class="opacity-60">استاد:</span>
+                            {{ $course->teacher ? $course->teacher->first_name.' '.$course->teacher->last_name : 'تعیین نشده' }}
+                        </p>
+                        <p>
+                            <span class="opacity-60">وضعیت:</span>
+                            <span class="badge badge-sm {{ $course->status?->color() }}">{{ $course->statusLabel() }}</span>
+                        </p>
+                        @if ($course->description)
+                            <p class="md:col-span-2">
+                                <span class="opacity-60">توضیحات:</span> {{ $course->description }}
+                            </p>
+                        @endif
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-base font-bold mb-3">زمان‌بندی</h3>
+                    <div class="grid gap-2 md:grid-cols-3">
+                        <p><span class="opacity-60">شروع:</span> {{ $course->startsAtJalali() ?? '—' }}</p>
+                        <p><span class="opacity-60">تعداد جلسات:</span> {{ to_persian_digits($course->session_count) }}</p>
+                        <p><span class="opacity-60">مدت هر جلسه:</span> {{ to_persian_digits($course->session_duration) }} دقیقه</p>
+                        <p class="md:col-span-3">
+                            <span class="opacity-60">مدت کل:</span>
+                            {{ to_persian_digits(number_format($course->totalHours(), 1)) }} ساعت
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-base font-bold mb-3">ظرفیت و ثبت‌نام</h3>
+                    <div class="grid gap-2 md:grid-cols-3">
+                        <p>
+                            <span class="opacity-60">ظرفیت:</span>
+                            @if ($course->capacity === 0)
+                                <span class="text-xs opacity-60">نامحدود</span>
+                            @else
+                                {{ to_persian_digits($course->capacity) }}
+                            @endif
+                        </p>
+                        <p><span class="opacity-60">ثبت‌نام قطعی:</span> {{ to_persian_digits($course->enrolledCount()) }}</p>
+                        <p>
+                            <span class="opacity-60">جای خالی:</span>
+                            {{ $course->freeSeats() === null ? 'نامحدود' : to_persian_digits($course->freeSeats()) }}
+                        </p>
+                    </div>
+
+                    @if ($course->enrollments->isNotEmpty())
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>دانش‌آموز</th>
+                                        <th>وضعیت</th>
+                                        <th>شهریهٔ نهایی</th>
+                                        <th>تاریخ ثبت‌نام</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($course->enrollments as $enrollment)
+                                        <tr>
+                                            <td>
+                                                {{ $enrollment->student?->first_name }} {{ $enrollment->student?->last_name }}
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-sm {{ $enrollment->status?->color() }}">
+                                                    {{ $enrollment->statusLabel() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if ($enrollment->final_fee === null)
+                                                    <span class="opacity-60">تعیین نشده</span>
+                                                @else
+                                                    {{ to_persian_digits(number_format($enrollment->final_fee / 10)) }} تومان
+                                                @endif
+                                            </td>
+                                            <td>{{ $enrollment->enrolledAtJalali() ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-sm opacity-60 mt-2">هنوز کسی در این دوره ثبت‌نام نکرده است.</p>
+                    @endif
+                </div>
+
+                <div>
+                    <h3 class="text-base font-bold mb-3">مالی</h3>
+                    <div class="grid gap-2 md:grid-cols-2">
+                        <p>
+                            <span class="opacity-60">شهریهٔ پایه:</span>
+                            @if ($course->base_fee === 0)
+                                <span class="badge badge-ghost badge-sm">رایگان</span>
+                            @else
+                                {{ to_persian_digits(number_format($course->base_fee / 10)) }} تومان
+                            @endif
+                        </p>
+                        <p>
+                            <span class="opacity-60">ظرفیت سالانهٔ درس:</span>
+                            @if ($course->subject?->remainingHours() === null)
+                                محدودیت ندارد
+                            @else
+                                {{ to_persian_digits($course->subject->remainingHours()) }} ساعت باقی‌مانده
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <x-button label="بستن" class="btn-ghost" wire:click="closeView" />
+                </div>
+            </div>
+        @endif
+    </x-modal>
+
     {{-- تأیید حذف. اگر دوره ثبت‌نام قطعی دارد، حذف انجام نمی‌شود: آن ثبت‌نام‌ها
          مبنای فاکتور و کارنامه‌اند. بایگانی کردن راه برگشت‌پذیر است. --}}
     <x-modal wire:model="showDeleteModal" title="حذف دوره" separator>

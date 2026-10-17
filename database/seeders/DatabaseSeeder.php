@@ -48,15 +48,26 @@ class DatabaseSeeder extends Seeder
         // قبل از آن‌ها وجود داشته باشند وگرنه هر دوره یک درس و یک استاد
         // یک‌بارمصرف خودش می‌سازد
         $this->call(TeacherSeeder::class);
+        $this->call(SubjectSeeder::class);
+        $this->call(StudentSeeder::class);
 
         // حساب دبیر باید به رکورد استاد وصل باشد، وگرنه «کلاس‌های من» برای او
-        // همیشه خالی است و دبیر نمی‌تواند کارش را ببیند
+        // همیشه خالی است و دبیر نمی‌تواند کارش را ببیند.
+        //
+        // این کار بعد از ساخت دوره‌ها انجام می‌شود و به استادی وصل می‌کند که
+        // واقعاً دوره دارد؛ وصل کردن به «اولین استاد» یعنی حسابی که همیشه
+        // صفحهٔ خالی نشان می‌دهد.
         $teacherUser = User::query()->where('role', Role::Teacher)->first();
 
         if ($teacherUser && ! $teacherUser->teacher_id) {
-            $teacherUser->update(['teacher_id' => Teacher::query()->value('id')]);
+            $teacher = Teacher::query()
+                ->whereHas('courses')
+                ->orderByDesc('id')
+                ->first() ?? Teacher::query()->first();
+
+            if ($teacher) {
+                $teacherUser->update(['teacher_id' => $teacher->id]);
+            }
         }
-        $this->call(SubjectSeeder::class);
-        $this->call(StudentSeeder::class);
     }
 }

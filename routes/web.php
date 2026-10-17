@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,finance,reception')
         ->name('students.index');
 
+    // دوره‌ها: مدیر، معاون (ثبت‌نام و ارزیابی)، پذیرش (ثبت‌نام و فاکتور) و
+    // دبیر برای «کلاس‌های خودش». امور مالی دوره را می‌بیند ولی ویرایشش نه.
+    Route::livewire('/courses', 'pages::courses.index')
+        ->middleware('role:admin,deputy,reception,teacher')
+        ->name('courses.index');
+
     // اساتید و حقوق: فقط مدیر و معاون. امور مالی دسترسی ندارد چون حقوق
     // همان‌جاست و دبیر نباید لیست حقوق را ببیند.
     Route::livewire('/teachers', 'pages::teachers.index')

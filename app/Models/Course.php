@@ -162,6 +162,11 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
+
     /** یک دوره چند جلسه در هفته دارد، پس رابطه یک‌به‌چند است نه یک‌به‌یک. */
     public function sessions(): HasMany
     {

@@ -75,6 +75,11 @@ class Student extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
+
     /** سرپرستی که با او تماس گرفته می‌شود؛ اگر تعیین نشده باشد، اولی. */
     public function primaryGuardian(): HasOne
     {

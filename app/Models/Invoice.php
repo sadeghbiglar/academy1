@@ -188,6 +188,11 @@ class Invoice extends Model
 
     // ── نمایش ──────────────────────────────────────────────
 
+    public function statusLabel(): string
+    {
+        return $this->status?->label() ?? '—';
+    }
+
     public function amountLabel(): string
     {
         return to_persian_digits(number_format($this->amount)).' تومان';

@@ -103,6 +103,11 @@ class CourseEnrollment extends Model
         return max(0, $base - $this->discount);
     }
 
+    public function finalFee(): int
+    {
+        return $this->calculateFinalFee();
+    }
+
     public function statusLabel(): string
     {
         return $this->status?->label() ?? '—';

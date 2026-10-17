@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,finance,reception')
         ->name('students.index');
 
+    // پروندهٔ یک دانش‌آموز. نقش‌ها مثل فهرست‌اند و خود صفحه بخش‌هایی را که
+    // آن نقش اجازه ندارد (نمره برای امور مالی) پنهان می‌کند.
+    Route::livewire('/students/{student}', 'pages::students.show')
+        ->middleware('role:admin,deputy,finance,reception')
+        ->name('students.show');
+
     // دوره‌ها: مدیر، معاون (ثبت‌نام و ارزیابی)، پذیرش (ثبت‌نام و فاکتور) و
     // دبیر برای «کلاس‌های خودش». امور مالی دوره را می‌بیند ولی ویرایشش نه.
     Route::livewire('/courses', 'pages::courses.index')

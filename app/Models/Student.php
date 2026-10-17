@@ -54,6 +54,17 @@ class Student extends Model
         return $this->hasOne(StudentProfile::class);
     }
 
+    /**
+     * نام کامل.
+     *
+     * به‌صورت accessor است و نه ستون ذخیره‌شده: «علی رضایی» از «علی» و «رضایی»
+     * ساخته می‌شود. اگر ذخیره می‌شد، هر تغییر نام باید دو جا را عوض می‌کرد.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
     public function guardians(): HasMany
     {
         return $this->hasMany(Guardian::class);

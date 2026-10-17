@@ -969,6 +969,11 @@ class extends Component {
                             class="btn-sm btn-ghost"
                             wire:click="viewStudent({{ $student->id }})"
                             aria-label="مشاهده" />
+                        <a href="{{ route('students.show', $student) }}"
+                           class="btn btn-sm btn-ghost"
+                           aria-label="پروندهٔ کامل">
+                            پرونده
+                        </a>
                         <x-button
                             icon="o-pencil"
                             class="btn-sm btn-ghost"

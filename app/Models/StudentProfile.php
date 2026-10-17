@@ -41,6 +41,17 @@ class StudentProfile extends Model
         return $this->belongsTo(Student::class);
     }
 
+    public function statusColor(): string
+    {
+        return $this->status?->color() ?? 'badge-ghost';
+    }
+
+    /** کد دانش‌آموزی، یا «—» وقتی پرونده هنوز ثبت نشده. */
+    public function codeLabel(): string
+    {
+        return $this->student_code ?: '—';
+    }
+
     public function statusLabel(): string
     {
         return $this->status?->label() ?? '—';

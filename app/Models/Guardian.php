@@ -44,6 +44,23 @@ class Guardian extends Model
         return $this->belongsTo(Student::class);
     }
 
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
+    /**
+     * نسبت سرپرست به دانش‌آموز.
+     *
+     * متن آزاد است و در جدول مقدار دارد؛ نگاشت به فهرست ثابت یعنی هر
+     * نسبت جدیدی یک مهاجرت دیتابیس می‌خواهد، در حالی که «عمو» هم یک نسبت
+     * معتبر است.
+     */
+    public function relationLabel(): string
+    {
+        return $this->relation ?: '—';
+    }
+
     protected static function booted(): void
     {
         // قبل از هر نوشتن، نه فقط هنگام درج

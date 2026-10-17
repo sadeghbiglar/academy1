@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Gender;
 use App\Models\Student;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -91,7 +92,7 @@ class extends Component {
                 'required',
                 'regex:/^[0-9]{4}\/[0-9]{2}\/[0-9]{2}$/',
             ],
-            'gender' => ['required', 'in:male,female'],
+            'gender' => ['required', Gender::rule()],
 
             'mobile' => ['required', 'string', 'regex:/^09[0-9]{9}$/'],
             'phone' => ['nullable', 'string', 'max:20'],
@@ -164,7 +165,8 @@ class extends Component {
         $this->edit_national_code = $student->national_code ?? '';
         $this->edit_father_name = $student->father_name ?? '';
         $this->edit_birth_date = jalali_date($student->birth_date) ?? '';
-        $this->edit_gender = $student->gender ?? '';
+        // مقدار enum باید به اسکالر تبدیل شود؛ پراپرتی Livewire از نوع string است
+        $this->edit_gender = $student->gender?->value ?? '';
 
         // اطلاعات تماس
         $this->edit_mobile = $student->mobile;
@@ -194,7 +196,7 @@ class extends Component {
                 'required',
                 'regex:/^[0-9]{4}\/[0-9]{2}\/[0-9]{2}$/',
             ],
-            'edit_gender' => ['required', 'in:male,female'],
+            'edit_gender' => ['required', Gender::rule()],
 
             'edit_mobile' => ['required', 'string', 'regex:/^09[0-9]{9}$/'],
             'edit_phone' => ['nullable', 'string', 'max:20'],
@@ -392,10 +394,7 @@ class extends Component {
                     <x-select
                         label="جنسیت"
                         wire:model="gender"
-                        :options="[
-                    ['id' => 'male', 'name' => 'پسر'],
-                    ['id' => 'female', 'name' => 'دختر'],
-                ]"
+                        :options="Gender::options()"
                         option-value="id"
                         option-label="name"
                         placeholder="انتخاب جنسیت"
@@ -555,10 +554,7 @@ class extends Component {
                     <x-select
                         label="جنسیت"
                         wire:model="edit_gender"
-                        :options="[
-                    ['id' => 'male', 'name' => 'پسر'],
-                    ['id' => 'female', 'name' => 'دختر'],
-                ]"
+                        :options="Gender::options()"
                         option-value="id"
                         option-label="name"
                         placeholder="انتخاب جنسیت"
@@ -768,13 +764,7 @@ class extends Component {
                     <div>
                         <span class="text-sm opacity-60">جنسیت</span>
                         <p class="font-medium">
-                            @if ($student->gender === 'male')
-                            پسر
-                            @elseif ($student->gender === 'female')
-                            دختر
-                            @else
-                            —
-                            @endif
+                            {{ $student->genderLabel() }}
                         </p>
                     </div>
 
@@ -961,13 +951,7 @@ class extends Component {
                     striped
                     hover>
                     @scope('cell_gender', $student)
-                    @if ($student->gender === 'male')
-                    پسر
-                    @elseif ($student->gender === 'female')
-                    دختر
-                    @else
-                    —
-                    @endif
+                    {{ $student->genderLabel() }}
                     @endscope
 
                     @scope('cell_birth_date', $student)

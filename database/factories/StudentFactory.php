@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Gender;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,7 +22,7 @@ class StudentFactory extends Factory
             'national_code' => fake()->numerify('##########'),
             'father_name' => fake()->firstName(),
             'birth_date' => fake()->dateTimeBetween('-18 years', '-7 years')->format('Y-m-d'),
-            'gender' => fake()->randomElement(['male', 'female']),
+            'gender' => fake()->randomElement(Gender::cases()),
 
             'mobile' => fake()->numerify('091########'),
             'phone' => fake()->numerify('024########'),

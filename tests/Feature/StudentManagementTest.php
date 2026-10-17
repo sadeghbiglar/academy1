@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Gender;
 use App\Enums\Role;
 use App\Models\Student;
 use App\Models\User;
@@ -19,7 +20,7 @@ class StudentManagementTest extends TestCase
         'national_code' => '1234567890',
         'father_name' => 'محمد',
         'birth_date' => '1380/05/12',
-        'gender' => 'male',
+        'gender' => Gender::Male,
         'mobile' => '09123456789',
         'phone' => '02433445566',
         'email' => 'ali@example.com',

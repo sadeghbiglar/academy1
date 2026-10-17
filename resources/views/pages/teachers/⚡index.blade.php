@@ -130,13 +130,7 @@ class extends Component
                     hover>
 
                     @scope('cell_gender', $teacher)
-                    @if ($teacher->gender === 'male')
-                    آقا
-                    @elseif ($teacher->gender === 'female')
-                    خانم
-                    @else
-                    —
-                    @endif
+                    {{ $teacher->genderLabel() }}
                     @endscope
 
                     @scope('cell_hire_date', $teacher)

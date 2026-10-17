@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Gender;
 use Database\Factories\TeacherFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +34,12 @@ class Teacher extends Model
         return [
             'birth_date' => 'date',
             'hire_date' => 'date',
+            'gender' => Gender::class,
         ];
+    }
+
+    public function genderLabel(): string
+    {
+        return $this->gender?->label() ?? '—';
     }
 }

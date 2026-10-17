@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Role;
+use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -45,6 +46,20 @@ class UserFactory extends Factory
     /**
      * Indicate that the model's email address should be unverified.
      */
+    /**
+     * حساب دبیر باید به یک رکورد استاد وصل باشد.
+     *
+     * بدون این اتصال، «کلاس‌های من» همیشه خالی است و هیچ تستی که با نقش
+     * دبیر کار می‌کند نمی‌تواند بفهمد داده درست است یا نه.
+     */
+    public function teacher(): static
+    {
+        return $this->state(fn () => [
+            'role' => Role::Teacher,
+            'teacher_id' => Teacher::factory(),
+        ]);
+    }
+
     /** کاربر مدیر — همه بخش‌ها را می‌بیند. */
     public function admin(): static
     {
@@ -53,7 +68,11 @@ class UserFactory extends Factory
 
     public function role(Role $role): static
     {
-        return $this->state(fn () => ['role' => $role]);
+        return $this->state(function () use ($role) {
+            return $role === Role::Teacher
+                ? ['role' => $role, 'teacher_id' => Teacher::factory()]
+                : ['role' => $role, 'teacher_id' => null];
+        });
     }
 
     public function inactive(): static

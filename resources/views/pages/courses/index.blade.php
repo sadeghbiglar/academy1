@@ -118,6 +118,16 @@
                     @scope('cell_starts_at', $course)
                         {{ $course->startsAtJalali() ?? '—' }}
                     @endscope
+
+                    @scope('actions', $course)
+                        <div class="flex items-center gap-1">
+                            <x-button
+                                icon="o-pencil"
+                                class="btn-sm btn-ghost"
+                                wire:click="editCourse({{ $course->id }})"
+                                aria-label="ویرایش" />
+                        </div>
+                    @endscope
                 </x-table>
             </div>
         </div>
@@ -130,6 +140,53 @@
     {{-- ── ایجاد دوره ──────────────────────────────────────────
          ورودی تاریخ فقط از JalaliDatePicker می‌آید؛ مقدار property همیشه
          میلادی ISO است و نمایش شمسی داخل خود کامپوننت انجام می‌شود. --}}
+    <x-modal wire:model="showEditModal" title="ویرایش دوره" separator>
+        <div class="space-y-5">
+            <div class="grid gap-3 md:grid-cols-2">
+                <x-input label="عنوان دوره" wire:model="new_title" error="new_title" />
+
+                <x-input label="کد دوره" wire:model="new_code" error="new_code" />
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2">
+                <x-select label="درس" wire:model="new_subject_id"
+                          :options="$this->subjectOptions()"
+                          option-value="id" option-label="name"
+                          placeholder="انتخاب درس" error="new_subject_id" />
+
+                <x-select label="استاد" wire:model="new_teacher_id"
+                          :options="$this->teacherOptions()"
+                          option-value="id" option-label="name"
+                          placeholder="بعداً تعیین می‌شود" error="new_teacher_id" />
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-3">
+                <x-input label="ظرفیت" type="number" wire:model="new_capacity"
+                         hint="۰ یعنی نامحدود" error="new_capacity" />
+
+                <x-input label="تعداد جلسات" type="number" wire:model="new_session_count"
+                         error="new_session_count" />
+
+                <x-input label="مدت هر جلسه (دقیقه)" type="number" wire:model="new_session_duration"
+                         error="new_session_duration" />
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2">
+                <x-input label="شهریهٔ پایه (تومان)" type="number" wire:model="new_base_fee"
+                         hint="۰ یعنی رایگان" error="new_base_fee" />
+
+                <livewire:jalali-date-picker
+                    wire:model.live="new_starts_at"
+                    label="تاریخ شروع (شمسی)" />
+            </div>
+
+            <div class="modal-action">
+                <x-button label="انصراف" class="btn-ghost" wire:click="cancelEdit" />
+                <x-button label="ذخیرهٔ تغییرات" class="btn-primary" wire:click="updateCourse" />
+            </div>
+        </div>
+    </x-modal>
+
     <x-modal wire:model="showCreateModal" title="ثبت دورهٔ جدید" separator>
         <div class="space-y-5">
             <div class="grid gap-3 md:grid-cols-2">

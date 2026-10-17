@@ -128,6 +128,95 @@ class extends Component {
         ]);
     }
 
+    public ?int $editingCourseId = null;
+
+    public bool $showEditModal = false;
+
+    /** فرم ویرایش با همان نام‌های فرم ایجاد پر می‌شود تا یک منطق اعتبارسنجی داشته باشیم. */
+    public function editCourse(int $id): void
+    {
+        $course = Course::findOrFail($id);
+
+        $this->editingCourseId = $course->id;
+
+        $this->new_title = $course->title;
+        $this->new_code = $course->code ?? '';
+        $this->new_subject_id = (string) $course->subject_id;
+        $this->new_teacher_id = $course->teacher_id ? (string) $course->teacher_id : '';
+        $this->new_capacity = (string) $course->capacity;
+        $this->new_session_count = (string) $course->session_count;
+        $this->new_session_duration = (string) $course->session_duration;
+        $this->new_base_fee = (string) $course->base_fee;
+
+        // میلادی ISO؛ خود JalaliDatePicker نمایش شمسی را از این می‌سازد
+        $this->new_starts_at = $course->starts_at?->format('Y-m-d') ?? '';
+
+        $this->resetValidation();
+
+        $this->showEditModal = true;
+    }
+
+    public function updateCourse(): void
+    {
+        abort_if($this->editingCourseId === null, 404);
+
+        $this->validate(
+            [
+                'new_title' => ['required', 'string', 'min:3', 'max:255'],
+                'new_code' => [
+                    'nullable', 'string', 'max:30',
+                    // کد خودِ همین رکورد نباید با خودش تکراری حساب شود
+                    Rule::unique('courses', 'code')->ignore($this->editingCourseId),
+                ],
+                'new_subject_id' => ['required', 'integer', Rule::exists('subjects', 'id')],
+                'new_teacher_id' => ['nullable', 'integer', Rule::exists('teachers', 'id')],
+                'new_capacity' => ['required', 'integer', 'min:0', 'max:1000'],
+                'new_session_count' => ['required', 'integer', 'min:0', 'max:500'],
+                'new_session_duration' => ['required', 'integer', 'min:15', 'max:480'],
+                'new_base_fee' => ['required', 'integer', 'min:0'],
+                'new_starts_at' => ['nullable', 'date_format:Y-m-d'],
+            ],
+            [],
+            [
+                'new_title' => 'عنوان',
+                'new_code' => 'کد دوره',
+                'new_subject_id' => 'درس',
+                'new_teacher_id' => 'استاد',
+                'new_capacity' => 'ظرفیت',
+                'new_session_count' => 'تعداد جلسات',
+                'new_session_duration' => 'مدت هر جلسه',
+                'new_base_fee' => 'شهریه',
+                'new_starts_at' => 'تاریخ شروع',
+            ],
+        );
+
+        Course::findOrFail($this->editingCourseId)->update([
+            'title' => $this->new_title,
+            'code' => $this->new_code === '' ? null : $this->new_code,
+            'subject_id' => (int) $this->new_subject_id,
+            'teacher_id' => $this->new_teacher_id === '' ? null : (int) $this->new_teacher_id,
+            'capacity' => (int) $this->new_capacity,
+            'session_count' => (int) $this->new_session_count,
+            'session_duration' => (int) $this->new_session_duration,
+            'base_fee' => (int) $this->new_base_fee,
+            'starts_at' => $this->new_starts_at === '' ? null : $this->new_starts_at,
+        ]);
+
+        $this->resetCreateForm();
+        $this->editingCourseId = null;
+        $this->showEditModal = false;
+
+        $this->success('ذخیره شد', 'تغییرات دوره ثبت شد.');
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->editingCourseId = null;
+        $this->showEditModal = false;
+        $this->resetCreateForm();
+        $this->resetValidation();
+    }
+
     #[Computed]
     public function subjectOptions(): array
     {

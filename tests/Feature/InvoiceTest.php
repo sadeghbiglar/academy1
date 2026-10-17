@@ -228,6 +228,15 @@ class InvoiceTest extends TestCase
         $this->assertTrue($invoice->isPaid());
     }
 
+    public function test_an_invoice_due_today_is_not_yet_overdue(): void
+    {
+        // موعدِ امروز یعنی هنوز فرصت دارند؛ صبح روز موعد «معوق» شمرده می‌شد
+        $invoice = Invoice::issue($this->student(), null, 2_000_000, dueAt: today()->toDateString());
+
+        $this->assertFalse($invoice->isOverdue());
+        $this->assertSame(InvoiceStatus::Issued, $invoice->syncStatus()->status);
+    }
+
     public function test_a_past_due_unpaid_invoice_is_overdue(): void
     {
         $invoice = Invoice::issue(

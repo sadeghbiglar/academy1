@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -62,6 +63,72 @@ class Invoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function installments(): HasMany
+    {
+        return $this->hasMany(Installment::class);
+    }
+
+    /**
+     * اقساط، به ترتیب سررسید.
+     *
+     * ساخت برنامه در Installment::plan است، نه اینجا: این فقط خواندن است.
+     */
+    public function installmentsSorted(): HasMany
+    {
+        return $this->installments()->orderBy('sequence');
+    }
+
+    /** جمع کل اقساط. باید برابر مبلغ قابل پرداخت باشد. */
+    public function plannedAmount(): int
+    {
+        return (int) $this->installments()->sum('amount');
+    }
+
+    public function hasInstallmentPlan(): bool
+    {
+        return $this->installments()->exists();
+    }
+
+    /**
+     * اقساط معوق: سررسید گذشته و تا این لحظه پوشش داده نشده.
+     *
+     * پرداخت‌ها به ترتیب سررسید تخصیص می‌یابند، نه به ترتیب ثبت: خانواده معمولاً
+     * پول را می‌دهد و می‌گوید «برای قسط بعدی»، و اگر پول بی‌ترتیب تخصیص یابد،
+     * قسط اول معوق می‌ماند در حالی که قسط دوم پوشش‌داده‌شده نشان داده می‌شود.
+     *
+     * اعتبارِ بیش از حد فاکتور هم اقساط بعدی را می‌پوشاند؛ خانواده‌ای که کل
+     * سال را یک‌جا داده، بدهکارِ معوق نیست.
+     *
+     * @return Collection<int, Installment>
+     */
+    public function overdueInstallments()
+    {
+        $installments = $this->installments()
+            ->orderBy('sequence')
+            ->whereDate('due_at', '<', today())
+            ->get();
+
+        $budget = $this->paidAmount();
+
+        return $installments
+            ->reject(function (Installment $installment) use (&$budget) {
+                if ($budget >= $installment->amount) {
+                    $budget -= $installment->amount;
+
+                    return true;
+                }
+
+                return false;
+            })
+            ->values();
+    }
+
+    /** مجموع اقساط معوق؛ عددی که روی فاکتور نمایش داده می‌شود. */
+    public function overdueAmount(): int
+    {
+        return (int) $this->overdueInstallments()->sum('amount');
     }
 
     // ── ساخت ───────────────────────────────────────────────
@@ -157,8 +224,10 @@ class Invoice extends Model
     /** فاکتور گذشته از مهلت و هنوز پرداخت‌نشده. */
     public function isOverdue(): bool
     {
+        // مقایسه با تاریخ، نه با لحظه: cast روی date نیمه‌شب می‌دهد و
+        // مقایسهٔ زمانی، موعدِ امروز را از همان صبح «گذشته» می‌گیرد
         return $this->due_at !== null
-            && $this->due_at->isPast()
+            && $this->due_at->lt(today())
             && $this->remaining() > 0
             && $this->status->acceptsPayment();
     }

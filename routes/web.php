@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,6 +75,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'printReceipt'])
         ->middleware('role:admin,finance,reception')
         ->name('finance.receipt.print');
+
+    // گزارش وصولی و بدهکاران: همان نقش‌های مالی
+    Route::get('/reports/balances', [ReportController::class, 'balances'])
+        ->middleware('role:admin,finance,reception')
+        ->name('reports.balances');
 
     Route::livewire('/profile', 'pages::profile.index')->name('profile');
 

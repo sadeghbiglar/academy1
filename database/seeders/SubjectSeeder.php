@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\WeekDay;
+use App\Models\ClassSession;
 use App\Models\Course;
 use App\Models\Subject;
 use App\Models\Teacher;
@@ -48,7 +50,10 @@ class SubjectSeeder extends Seeder
 
         Course::factory()->count(self::COURSE_COUNT)->create();
 
-        $this->command?->info('Seeded '.Subject::count().' subjects, '.Course::count().' courses.');
+        $this->seedSchedules();
+
+        $this->command?->info('Seeded '.Subject::count().' subjects, '.Course::count()
+            .' courses, '.ClassSession::count().' class sessions.');
     }
 
     /**
@@ -93,5 +98,53 @@ class SubjectSeeder extends Seeder
         }
 
         return $linked;
+    }
+
+    /**
+     * زمان‌بندی هفتگی برای هر دوره.
+     *
+     * جلسات روی مرز نیم‌ساعت و در بازهٔ منطقی (۸ تا ۲۰) می‌افتند و هر دوره یک
+     * تا دو روز در هفته دارد — همان چیزی که برنامهٔ یک آموزشگاه واقعی است.
+     *
+     * اتاق‌ها روی روزهای مشترک عمداً یکی‌اند تا داده نمونه گاهی تداخل داشته
+     * باشد: اگر همیشه بی‌تداخل باشد، صفحهٔ تقویم هیچ‌وقت حالت واقعی را نشان
+     * نمی‌دهد.
+     */
+    private function seedSchedules(): void
+    {
+        $slots = [
+            [WeekDay::Saturday, 8 * 60, 10 * 60, 'کلاس ۱'],
+            [WeekDay::Saturday, 16 * 60, 18 * 60, 'کلاس ۲'],
+            [WeekDay::Sunday, 9 * 60 + 30, 11 * 60 + 30, 'کلاس ۱'],
+            [WeekDay::Monday, 17 * 60, 19 * 60, 'کلاس ۳'],
+            [WeekDay::Tuesday, 10 * 60, 12 * 60, 'کلاس ۲'],
+            [WeekDay::Tuesday, 18 * 60, 20 * 60, 'کلاس ۴'],
+            [WeekDay::Wednesday, 16 * 60, 18 * 60, 'کلاس ۱'],
+            [WeekDay::Thursday, 9 * 60, 11 * 60, 'کلاس ۳'],
+        ];
+
+        $count = 0;
+
+        foreach (Course::query()->get() as $course) {
+            if ($course->sessions()->exists()) {
+                continue;
+            }
+
+            $chosen = collect($slots)->shuffle()->take(fake()->numberBetween(1, 2));
+
+            foreach ($chosen as [$day, $start, $end, $room]) {
+                $course->sessions()->create([
+                    'week_day' => $day,
+                    'week_number' => 1,
+                    'start_minute' => $start,
+                    'end_minute' => $end,
+                    'room' => $room,
+                ]);
+
+                $count++;
+            }
+        }
+
+        $this->command?->info('Scheduled '.$count.' class sessions.');
     }
 }

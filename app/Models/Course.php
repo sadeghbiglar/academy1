@@ -162,6 +162,22 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    /** یک دوره چند جلسه در هفته دارد، پس رابطه یک‌به‌چند است نه یک‌به‌یک. */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(ClassSession::class);
+    }
+
+    /** الگوی هفتگی، بدون جلسه‌های تک‌روزِ ثبت‌شده. */
+    public function weeklySchedule(int $week = 1)
+    {
+        return $this->sessions()
+            ->where('week_number', $week)
+            ->orderBy('week_day')
+            ->orderBy('start_minute')
+            ->get();
+    }
+
     /**
      * آیا این دوره اجازهٔ حذف دارد؟
      *

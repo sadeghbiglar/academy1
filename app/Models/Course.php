@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Enums\CourseStatus;
+use App\Enums\EnrollmentStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -102,6 +104,55 @@ class Course extends Model
     public function startsAtJalali(): ?string
     {
         return jalali_date($this->starts_at);
+    }
+
+    /**
+     * تعداد ثبت‌نام‌های قطعی که جایی از ظرفیت را گرفته‌اند.
+     *
+     * نه pending و نه waitlisted. اگر رزروهای تأییدنشده شمرده شوند، ظرفیت قبل از
+     * پرداخت خانواده پر می‌شود و کسی که پول داده جا نمی‌گیرد.
+     */
+    public function enrolledCount(): int
+    {
+        return $this->enrollments()
+            ->where('status', EnrollmentStatus::Confirmed->value)
+            ->count();
+    }
+
+    /** جای خالی. ظرفیت صفر یعنی بی‌نهایت، پس جای خالی‌اش هم بی‌نهایت است. */
+    public function freeSeats(): ?int
+    {
+        if ($this->capacity === 0) {
+            return null;
+        }
+
+        return max(0, $this->capacity - $this->enrolledCount());
+    }
+
+    /**
+     * آیا ظرفیت پر است؟
+     *
+     * $except اجازه می‌دهد یک ثبت‌نام موجود را در شمارش نادیده بگیریم — بدون آن،
+     * تأیید یک ثبت‌نامِ در صف انتظار همیشه «ظرفیت پر» جواب می‌داد، چون خودِ
+     * آن ثبت‌نام یک جا اشغال می‌کرد و با یک جای دیگر اشتباه می‌شد.
+     */
+    public function isFull(?int $exceptEnrollmentId = null): bool
+    {
+        if ($this->capacity === 0) {
+            return false;
+        }
+
+        $count = $this->enrollments()
+            ->where('status', EnrollmentStatus::Confirmed->value)
+            ->when($exceptEnrollmentId, fn ($query) => $query->whereKeyNot($exceptEnrollmentId))
+            ->count();
+
+        return $count >= $this->capacity;
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(CourseEnrollment::class);
     }
 
     public function scopeStatus(Builder $query, CourseStatus|string $status): Builder

@@ -80,6 +80,40 @@ class Student extends Model
         return $this->hasMany(Grade::class);
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /** مجموعهٔ همهٔ فاکتورهای دانش‌آموز، چه با دوره چه بدون. */
+    public function totalPayable(): int
+    {
+        return (int) $this->invoices()
+            ->whereNotIn('status', ['cancelled'])
+            ->sum('payable');
+    }
+
+    public function totalPaid(): int
+    {
+        return (int) $this->payments()->sum('amount');
+    }
+
+    /** بدهی باز دانش‌آموز؛ هرگز منفی، پول اضافه طلب است نه بدهی. */
+    public function outstanding(): int
+    {
+        return max(0, $this->totalPayable() - $this->totalPaid());
+    }
+
+    public function credit(): int
+    {
+        return max(0, $this->totalPaid() - $this->totalPayable());
+    }
+
     /** سرپرستی که با او تماس گرفته می‌شود؛ اگر تعیین نشده باشد، اولی. */
     public function primaryGuardian(): HasOne
     {

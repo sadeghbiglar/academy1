@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Role;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -15,7 +17,10 @@ class TeacherIndexTest extends TestCase
     {
         Teacher::factory()->create(['first_name' => 'رضا', 'last_name' => 'محمدی']);
 
-        $this->get('/teachers')->assertOk()->assertSee('محمدی');
+        $this->actingAs(User::factory()->create(['role' => Role::Admin]))
+            ->get('/teachers')
+            ->assertOk()
+            ->assertSee('محمدی');
     }
 
     public function test_search_matches_first_last_mobile_and_national_code(): void

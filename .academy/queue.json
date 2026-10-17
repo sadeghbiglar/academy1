@@ -14,17 +14,13 @@
     "one_issue_per_commit": true
   },
   "done": [
+    31,
     30,
     28,
     29
   ],
   "in_progress": null,
   "next": [
-    {
-      "issue": 31,
-      "title": "احراز هویت و نقش‌ها (RBAC)",
-      "why": "دبیر نباید لیست حقوق را ببیند"
-    },
     {
       "issue": 32,
       "title": "ساختار ناوبری RTL و داشبورد اولیه",

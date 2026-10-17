@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Role;
 use App\Models\Student;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -33,7 +35,9 @@ class StudentManagementTest extends TestCase
     {
         Student::factory()->create(['first_name' => 'مریم', 'last_name' => 'کریمی']);
 
-        $this->get('/students')->assertOk();
+        $this->actingAs(User::factory()->create(['role' => Role::Admin]))
+            ->get('/students')
+            ->assertOk();
     }
 
     public function test_can_create_a_student_and_shamsi_birth_date_is_stored_as_gregorian(): void

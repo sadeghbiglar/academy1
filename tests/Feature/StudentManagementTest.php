@@ -17,7 +17,7 @@ class StudentManagementTest extends TestCase
     private const VALID = [
         'first_name' => 'علی',
         'last_name' => 'رضایی',
-        'national_code' => '1234567890',
+        'national_code' => '1234567891',
         'father_name' => 'محمد',
         'birth_date' => '1380/05/12',
         'gender' => Gender::Male,
@@ -51,13 +51,13 @@ class StudentManagementTest extends TestCase
 
         $this->assertDatabaseHas('students', [
             'first_name' => 'علی',
-            'national_code' => '1234567890',
+            'national_code' => '1234567891',
         ]);
 
         // 1380/05/12 SH must round-trip through the MySQL DATE column
         $this->assertSame(
             '2001-08-03',
-            Student::where('national_code', '1234567890')->value('birth_date')
+            Student::where('national_code', '1234567891')->value('birth_date')
                 ?->format('Y-m-d'),
         );
     }

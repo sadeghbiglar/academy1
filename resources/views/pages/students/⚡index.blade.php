@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Gender;
+use App\Rules\IranianNationalCode;
 use App\Models\Student;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -86,7 +87,7 @@ class extends Component {
         return [
             'first_name' => ['required', 'string', 'min:2', 'max:50'],
             'last_name' => ['required', 'string', 'min:2', 'max:50'],
-            'national_code' => ['required', 'string', 'size:10'],
+            'national_code' => ['required', 'string', 'size:10', new IranianNationalCode],
             'father_name' => ['required', 'string', 'min:2', 'max:50'],
             'birth_date' => [
                 'required',
@@ -190,7 +191,7 @@ class extends Component {
         $this->validate([
             'edit_first_name' => ['required', 'string', 'min:2', 'max:50'],
             'edit_last_name' => ['required', 'string', 'min:2', 'max:50'],
-            'edit_national_code' => ['required', 'string', 'size:10'],
+            'edit_national_code' => ['required', 'string', 'size:10', new IranianNationalCode],
             'edit_father_name' => ['required', 'string', 'min:2', 'max:50'],
             'edit_birth_date' => [
                 'required',

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\Gender;
 use App\Models\Student;
+use Database\Factories\Concerns\GeneratesNationalCode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class StudentFactory extends Factory
 {
+    use GeneratesNationalCode;
+
     /**
      * Define the model's default state.
      */
@@ -19,7 +22,7 @@ class StudentFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'national_code' => fake()->numerify('##########'),
+            'national_code' => $this->validNationalCode(),
             'father_name' => fake()->firstName(),
             'birth_date' => fake()->dateTimeBetween('-18 years', '-7 years')->format('Y-m-d'),
             'gender' => fake()->randomElement(Gender::cases()),

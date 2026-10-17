@@ -20,6 +20,7 @@ enum Status: string
     case Enrolling = 'enrolling';     // در حال ثبت‌نام
     case Graduated = 'graduated';     // فارغ‌التحصیل
     case Dropped = 'dropped';         // انصراف
+    case OnLeave = 'on_leave';        // مرخصی
 
     // وضعیت مالی
     case Unpaid = 'unpaid';           // پرداخت‌نشده
@@ -35,6 +36,7 @@ enum Status: string
             self::Enrolling => 'در حال ثبت‌نام',
             self::Graduated => 'فارغ‌التحصیل',
             self::Dropped => 'انصراف',
+            self::OnLeave => 'مرخصی',
             self::Unpaid => 'پرداخت‌نشده',
             self::Partial => 'پرداخت جزئی',
             self::Paid => 'پرداخت‌شده',
@@ -48,7 +50,7 @@ enum Status: string
         return match ($this) {
             self::Active, self::Paid => 'badge-success',
             self::Inactive, self::Dropped, self::Refunded => 'badge-error',
-            self::Enrolling, self::Partial => 'badge-warning',
+            self::Enrolling, self::Partial, self::OnLeave => 'badge-warning',
             self::Graduated, self::Unpaid => 'badge-info',
         };
     }

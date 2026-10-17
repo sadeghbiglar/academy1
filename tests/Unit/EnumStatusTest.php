@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Enums\Gender;
 use App\Enums\Status;
 use App\Models\Student;
+use App\Models\StudentProfile;
 use App\Models\Teacher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -120,17 +121,17 @@ class EnumStatusTest extends TestCase
 
     public function test_status_casts_to_the_enum(): void
     {
-        $student = Student::factory()->create(['status' => Status::Paid]);
+        $profile = StudentProfile::factory()->create(['status' => Status::Paid]);
 
-        $this->assertInstanceOf(Status::class, $student->status);
-        $this->assertSame('پرداخت‌شده', $student->status->label());
+        $this->assertInstanceOf(Status::class, $profile->status);
+        $this->assertSame('پرداخت‌شده', $profile->statusLabel());
     }
 
-    public function test_a_new_student_defaults_to_enrolling(): void
+    public function test_a_new_profile_defaults_to_enrolling_not_active(): void
     {
-        // پیش‌فرض اشتباه «فعال» بود: دانش‌آموزی که هنوز ثبت‌نامش نهایی نشده نباید
-        // فعال به نظر برسد
-        $this->assertSame(Status::Enrolling, Student::factory()->create()->status);
+        // پیش‌فرض «فعال» غلط بود: دانش‌آموزی که ثبت‌نامش نهایی نشده نباید فعال
+        // به نظر برسد
+        $this->assertSame(Status::Enrolling, StudentProfile::factory()->create()->status);
     }
 
     public function test_every_status_has_a_label_and_a_badge_color(): void

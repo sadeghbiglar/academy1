@@ -172,6 +172,56 @@ class Invoice extends Model
         ]);
     }
 
+    /**
+     * صدور فاکتور با چند قاعدهٔ تخفیف.
+     *
+     * تخفیف‌ها ترکیب می‌شوند و مبلغ نهایی روی فاکتور ثابت می‌ماند. ریزِ هر
+     * تخفیف جدا ذخیره نمی‌شود چون نوع/مقدارِ تخفیفِ اول و مجموعش همان اطلاعات
+     * لازم برای چاپ است، و نگهداری «تخفیف ۱۰٪ + ۲۰۰ هزار» روی فاکتور به
+     * معنی بازمحاسبه‌کردن چیزی است که باید تاریخ خودش را ثابت نگه دارد.
+     *
+     * @param  iterable<Discount>  $discounts
+     */
+    public static function issueWithDiscounts(
+        Student $student,
+        ?Course $course,
+        int $amount,
+        iterable $discounts,
+        ?string $dueAt = null,
+        ?string $notes = null,
+    ): self {
+        $list = collect($discounts);
+
+        if ($list->isEmpty()) {
+            return static::issue($student, $course, $amount, dueAt: $dueAt, notes: $notes);
+        }
+
+        // مبلغ تخفیفِ ترکیبی مستقیم ذخیره می‌شود، نه «نوع و مقدارِ اول».
+        // عبور دادن ترکیب از مسیر percent/fixed باعث می‌شد «۱۰٪ و بعد
+        // ۲۰۰ هزار» در فاکتور چاپی به یک تخفیف ۱۰٪ تقلیل پیدا کند.
+        $total = Discount::combinedAmount($list, $amount);
+        $allPercent = $list->every(fn (Discount $d) => $d->type === DiscountType::Percent);
+
+        return static::create([
+            'number' => static::nextNumber(),
+            'student_id' => $student->id,
+            'course_id' => $course?->id,
+            'status' => InvoiceStatus::Issued,
+            'amount' => $amount,
+            'discount_amount' => $total,
+            // ترکیبِ درصدی با مبلغ ثابت، در نمایش به مبلغ ثابت تبدیل می‌شود
+            // تا چاپ با حساب واقعی یکی باشد
+            'discount_type' => $allPercent ? DiscountType::Percent : DiscountType::Fixed,
+            'discount_value' => $allPercent
+                ? (int) $list->first()->value
+                : $total,
+            'payable' => $amount - $total,
+            'notes' => $notes,
+            'issued_at' => now()->toDateString(),
+            'due_at' => $dueAt,
+        ]);
+    }
+
     /** IN-۱۲۳۴ — پیشوند نام آموزشگاه، بدون سال چون شماره باید یکتا بماند. */
     public static function nextNumber(): string
     {

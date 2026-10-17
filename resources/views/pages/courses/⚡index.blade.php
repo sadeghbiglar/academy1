@@ -7,6 +7,7 @@ use App\Models\CourseEnrollment;
 use App\Models\Subject;
 use App\Models\Teacher;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -126,6 +127,58 @@ class extends Component {
             'new_capacity', 'new_session_count', 'new_session_duration',
             'new_base_fee', 'new_starts_at',
         ]);
+    }
+
+    public ?int $deletingCourseId = null;
+
+    public bool $showDeleteModal = false;
+
+    /** عنوان دوره‌ای که قرار است حذف شود، تا کاربر بداند چه چیزی را تأیید می‌کند. */
+    public string $deletingCourseTitle = '';
+
+    public ?int $deletingCourseEnrollments = null;
+
+    public function confirmDelete(int $id): void
+    {
+        $course = Course::findOrFail($id);
+
+        $this->deletingCourseId = $course->id;
+        $this->deletingCourseTitle = $course->title;
+        $this->deletingCourseEnrollments = $course->confirmedEnrollmentsCount();
+
+        $this->resetValidation();
+
+        $this->showDeleteModal = true;
+    }
+
+    public function deleteCourse(): void
+    {
+        $course = Course::findOrFail($this->deletingCourseId);
+
+        // بررسی دوباره در لحظهٔ حذف، نه فقط وقتی مودال باز شد: بین باز شدن
+        // مودال و تأیید، ممکن است ثبت‌نام قطعی اضافه شده باشد
+        if (! $course->isDeletable()) {
+            $this->showDeleteModal = false;
+
+            throw ValidationException::withMessages([
+                'delete' => 'این دوره ثبت‌نام قطعی دارد و حذف نمی‌شود. آن را بایگانی کنید.',
+            ]);
+        }
+
+        $course->delete();
+
+        $this->cancelDelete();
+
+        $this->success('حذف شد', 'دورهٔ «'.$course->title.'» حذف شد.');
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deletingCourseId = null;
+        $this->deletingCourseTitle = '';
+        $this->deletingCourseEnrollments = null;
+        $this->resetValidation();
     }
 
     public ?int $editingCourseId = null;

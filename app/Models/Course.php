@@ -162,6 +162,28 @@ class Course extends Model
         return $this->hasMany(CourseEnrollment::class);
     }
 
+    /**
+     * آیا این دوره اجازهٔ حذف دارد؟
+     *
+     * تصمیم آگاهانه: دوره‌ای که ثبت‌نام قطعی دارد حذف نمی‌شود. آن ثبت‌نام‌ها
+     * همان چیزی هستند که فاکتور شهریه و کارنامه به آن ارجاع می‌دهند، و حذف
+     * والد آن‌ها را بی‌صدا با خود می‌برد. راه برگشتِ برگشت‌پذیر، بایگانی کردن
+     * است نه حذف.
+     */
+    public function isDeletable(): bool
+    {
+        return $this->enrollments()
+            ->where('status', EnrollmentStatus::Confirmed->value)
+            ->doesntExist();
+    }
+
+    public function confirmedEnrollmentsCount(): int
+    {
+        return $this->enrollments()
+            ->where('status', EnrollmentStatus::Confirmed->value)
+            ->count();
+    }
+
     public function scopeStatus(Builder $query, CourseStatus|string $status): Builder
     {
         return $query->where('status', $status instanceof CourseStatus ? $status->value : $status);

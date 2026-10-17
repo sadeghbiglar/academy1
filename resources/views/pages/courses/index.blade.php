@@ -126,6 +126,12 @@
                                 class="btn-sm btn-ghost"
                                 wire:click="editCourse({{ $course->id }})"
                                 aria-label="ویرایش" />
+
+                            <x-button
+                                icon="o-trash"
+                                class="btn-sm btn-ghost text-error"
+                                wire:click="confirmDelete({{ $course->id }})"
+                                aria-label="حذف" />
                         </div>
                     @endscope
                 </x-table>
@@ -140,6 +146,42 @@
     {{-- ── ایجاد دوره ──────────────────────────────────────────
          ورودی تاریخ فقط از JalaliDatePicker می‌آید؛ مقدار property همیشه
          میلادی ISO است و نمایش شمسی داخل خود کامپوننت انجام می‌شود. --}}
+    {{-- تأیید حذف. اگر دوره ثبت‌نام قطعی دارد، حذف انجام نمی‌شود: آن ثبت‌نام‌ها
+         مبنای فاکتور و کارنامه‌اند. بایگانی کردن راه برگشت‌پذیر است. --}}
+    <x-modal wire:model="showDeleteModal" title="حذف دوره" separator>
+        <div class="space-y-4">
+            <p>
+                آیا از حذف دورهٔ
+                <span class="font-bold">{{ $deletingCourseTitle }}</span>
+                مطمئن هستید؟
+            </p>
+
+            @if ($deletingCourseEnrollments > 0)
+                <div class="alert alert-warning">
+                    این دوره
+                    <span class="font-bold">{{ to_persian_digits($deletingCourseEnrollments) }}</span>
+                    ثبت‌نام قطعی دارد. حذف آن‌ها سابقهٔ مالی و کارنامه‌ای را که
+                    هنوز ساخته نشده از بین می‌برد، پس حذف انجام نمی‌شود.
+                    <span class="font-bold">بایگانی</span> کنید تا از فهرست‌ها بیرون
+                    برود ولی داده‌اش بماند.
+                </div>
+            @else
+
+                <p class="text-sm opacity-70">
+                    ثبت‌نام‌های لغو شده هم با حذف پاک می‌شوند.
+                </p>
+
+                <div class="modal-action">
+                    <x-button label="انصراف" class="btn-ghost" wire:click="cancelDelete" />
+                    <x-button
+                        label="حذف دوره"
+                        class="btn-error"
+                        wire:click="deleteCourse" />
+                </div>
+            @endif
+        </div>
+    </x-modal>
+
     <x-modal wire:model="showEditModal" title="ویرایش دوره" separator>
         <div class="space-y-5">
             <div class="grid gap-3 md:grid-cols-2">

@@ -86,6 +86,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,teacher')
         ->name('reports.academic');
 
+    // صورت سود و زیان: فقط مدیر و امور مالی. معاون آموزشی به هزینه‌ها دسترسی ندارد.
+    Route::get('/reports/profit-and-loss', [ReportController::class, 'profitAndLoss'])
+        ->middleware('role:admin,finance')
+        ->name('reports.profit-and-loss');
+
     Route::livewire('/profile', 'pages::profile.index')->name('profile');
 
     // مدیریت کاربران: فقط مدیر

@@ -6,6 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Models\Student;
 use App\Services\AcademicReport;
 use App\Services\BalanceReport;
+use App\Services\ProfitAndLoss;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -21,6 +22,7 @@ class ReportController extends Controller
     public function __construct(
         private readonly BalanceReport $report,
         private readonly AcademicReport $academic,
+        private readonly ProfitAndLoss $pnl,
     ) {}
 
     public function balances(Request $request): View
@@ -111,6 +113,31 @@ class ReportController extends Controller
             'to' => $data['to'] ?? null,
             'previousFrom' => $data['previous_from'] ?? null,
             'previousTo' => $data['previous_to'] ?? null,
+        ]);
+    }
+
+    /** صورت سود و زیان. */
+    public function profitAndLoss(Request $request): View
+    {
+        $data = $request->validate([
+            'from' => ['nullable', 'string'],
+            'to' => ['nullable', 'string'],
+        ]);
+
+        $from = $this->toMiladi($data['from'] ?? null);
+        $to = $this->toMiladi($data['to'] ?? null);
+
+        $pnl = $this->pnl;
+
+        return view('reports.profit-and-loss', [
+            'income' => $pnl->income($from, $to),
+            'expenses' => $pnl->expenses($from, $to),
+            'profit' => $pnl->profit($from, $to),
+            'byCategory' => $pnl->byCategory($from, $to),
+            'fixedVsVariable' => $pnl->fixedVsVariable($from, $to),
+            'monthly' => $pnl->monthly($from, $to),
+            'from' => $data['from'] ?? null,
+            'to' => $data['to'] ?? null,
         ]);
     }
 

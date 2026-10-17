@@ -77,6 +77,7 @@ enum Section: string
         return match ($this) {
             self::Dashboard => 'dashboard',
             self::Students => 'students.index',
+            self::Finance => 'finance.index',
             self::Teachers => 'teachers.index',
             self::Users => 'users.index',
             self::Courses => 'courses.index',

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FinanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,6 +51,29 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/teachers', 'pages::teachers.index')
         ->middleware('role:admin,deputy')
         ->name('teachers.index');
+
+    // مالی و فاکتور. مدیر، امور مالی و پذیرش — پذیرش فاکتور اولیه را می‌سازد.
+    // دبیر و معاون به پول دسترسی ندارند.
+    Route::get('/finance/invoices', [FinanceController::class, 'index'])
+        ->middleware('role:admin,finance,reception')
+        ->name('finance.index');
+
+    Route::get('/finance/invoices/{invoice}', [FinanceController::class, 'show'])
+        ->middleware('role:admin,finance,reception')
+        ->name('finance.show');
+
+    Route::post('/finance/invoices/{invoice}/payments', [FinanceController::class, 'store'])
+        ->middleware('role:admin,finance,reception')
+        ->name('finance.payments.store');
+
+    // چاپ: view جدا بدون layout پنل، چون منو و سایهٔ پنل روی کاغذ می‌افتند
+    Route::get('/finance/invoices/{invoice}/print', [FinanceController::class, 'printInvoice'])
+        ->middleware('role:admin,finance,reception')
+        ->name('finance.invoice.print');
+
+    Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'printReceipt'])
+        ->middleware('role:admin,finance,reception')
+        ->name('finance.receipt.print');
 
     Route::livewire('/profile', 'pages::profile.index')->name('profile');
 

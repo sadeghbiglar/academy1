@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\EnrollmentStatus;
 use App\Models\Attendance;
 use App\Models\Course;
+use App\Models\Setting;
 use App\Models\Student;
 use Illuminate\Support\Collection;
 
@@ -24,7 +25,20 @@ class AttendanceThreshold
 
     public const CRITICAL_BELOW = 65.0; // زیر این، بیش از حد غیبت
 
-    public function __construct(private readonly float $warningBelow = self::WARNING_BELOW) {}
+    public function __construct(
+        private readonly ?float $warningBelow = null,
+    ) {}
+
+    /**
+     * آستانهٔ مؤثر: تنظیم آموزشگاه اگر هست، وگرنه پیش‌فرض کد.
+     *
+     * این مقدار به‌صورت lazy خوانده می‌شود تا ساختن سرویس در تست، نیاز به
+     * تنظیمات نداشته باشد ولی در برنامه، تنظیم واقعی اعمال شود.
+     */
+    private function threshold(): float
+    {
+        return $this->warningBelow ?? Setting::attendanceWarning() ?? self::WARNING_BELOW;
+    }
 
     public function level(?float $rate): ?string
     {
@@ -36,7 +50,7 @@ class AttendanceThreshold
             return 'critical';
         }
 
-        return $rate < $this->warningBelow ? 'warning' : 'ok';
+        return $rate < $this->threshold() ? 'warning' : 'ok';
     }
 
     public function levelLabel(?float $rate): string

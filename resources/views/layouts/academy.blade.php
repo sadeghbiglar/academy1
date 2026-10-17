@@ -37,7 +37,14 @@
 
         <div class="p-6">
             <main>
-                {{ $slot }}
+                {{-- این قالب هم layout زنده (Livewire, با $slot) است و هم
+                     Blade layout (@extends). بدون این شرط، صفحه‌های
+                     کنترلری روی «Undefined variable $slot» می‌افتند. --}}
+                @isset($slot)
+                    {{ $slot }}
+                @else
+                    @yield('content')
+                @endisset
                 <x-toast />
             </main>
         </div>

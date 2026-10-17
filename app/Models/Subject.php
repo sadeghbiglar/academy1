@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\CourseStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Subject extends Model
@@ -43,6 +44,23 @@ class Subject extends Model
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class);
+    }
+
+    /**
+     * استادهایی که این درس را تدریس می‌کنند.
+     *
+     * معکوس تخصص‌های استاد: برای صفحهٔ انتخاب معلمِ یک درس، از این طرف پرس‌وجو
+     * می‌شود نه آن یکی.
+     */
+    public function teachers(): BelongsToMany
+    {
+        return $this->belongsToMany(Teacher::class, 'teacher_subjects');
+    }
+
+    /** دروسی که هنوز هیچ استاد فعالی برایشان ثبت نشده. */
+    public function scopeWithoutTeacher($query)
+    {
+        return $query->whereDoesntHave('teachers');
     }
 
     /**

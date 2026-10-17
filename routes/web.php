@@ -81,6 +81,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,finance,reception')
         ->name('reports.balances');
 
+    // گزارش‌های آموزشی: مدیر، معاون و دبیر. امور مالی نمره نمی‌بیند.
+    Route::get('/reports/academic', [ReportController::class, 'academic'])
+        ->middleware('role:admin,deputy,teacher')
+        ->name('reports.academic');
+
     Route::livewire('/profile', 'pages::profile.index')->name('profile');
 
     // مدیریت کاربران: فقط مدیر

@@ -43,7 +43,11 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        $this->call(StudentSeeder::class);
+        // ترتیب مهم است: دوره‌ها به درس و استاد وصل می‌شوند، پس هر دو باید
+        // قبل از آن‌ها وجود داشته باشند وگرنه هر دوره یک درس و یک استاد
+        // یک‌بارمصرف خودش می‌سازد
         $this->call(TeacherSeeder::class);
+        $this->call(SubjectSeeder::class);
+        $this->call(StudentSeeder::class);
     }
 }

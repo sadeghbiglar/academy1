@@ -48,7 +48,15 @@ class SubjectSeeder extends Seeder
 
         $this->command?->info('Linked '.$linked.' teacher-subject pairs.');
 
-        Course::factory()->count(self::COURSE_COUNT)->create();
+        // شمارشِ موجود تا هدف بالا می‌رود، نه اینکه با دیدن هرچیزی بایستد:
+        // اجرای دوبارهٔ seed نباید دورهٔ تازه بسازد، ولی نصب نیمه‌کاره باید با
+        // همان اجرا تا هدف کامل شود. بدون این گارد هر db:seed دادهٔ نمونه را
+        // دو برابر می‌کند و گزارش‌ها را از آب درمی‌آورد.
+        $existing = Course::query()->count();
+
+        if ($existing < self::COURSE_COUNT) {
+            Course::factory()->count(self::COURSE_COUNT - $existing)->create();
+        }
 
         $this->seedSchedules();
 

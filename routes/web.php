@@ -47,6 +47,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,reception,teacher')
         ->name('courses.index');
 
+    // حضور و غیاب روزانه: همان نقش‌هایی که بخش «حضور و غیاب» را می‌بینند
+    // (Role::sections). پذیرش این‌جا نیست چون ثبت‌نام کار اوست نه حضور کلاس،
+    // و امور مالی چون نمره و حضور کارش نیست.
+    Route::livewire('/attendance', 'pages::attendance.index')
+        ->middleware('role:admin,deputy,teacher')
+        ->name('attendance.index');
+
     // اساتید و حقوق: فقط مدیر و معاون. امور مالی دسترسی ندارد چون حقوق
     // همان‌جاست و دبیر نباید لیست حقوق را ببیند.
     Route::livewire('/teachers', 'pages::teachers.index')
@@ -85,6 +92,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/academic', [ReportController::class, 'academic'])
         ->middleware('role:admin,deputy,teacher')
         ->name('reports.academic');
+
+    // گزارش ساعت کارکرد اساتید: مبنای حقوق است، پس فقط مدیر و معاون.
+    // دبیر نباید ساعت خودش و بقیه را ببیند، و امور مالی هم به کارکرد دسترسی
+    // ندارد — فقط به پولِ نهایی.
+    Route::livewire('/reports/teacher-hours', 'pages::reports.teacher-hours')
+        ->middleware('role:admin,deputy')
+        ->name('reports.teacher-hours');
 
     // صورت سود و زیان: فقط مدیر و امور مالی. معاون آموزشی به هزینه‌ها دسترسی ندارد.
     Route::get('/reports/profit-and-loss', [ReportController::class, 'profitAndLoss'])

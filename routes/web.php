@@ -54,6 +54,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,teacher')
         ->name('attendance.index');
 
+    // تقویم شمسی کلاس‌ها و تعارض‌ها: همان نقش‌های بخش زمان‌بندی. دبیر فقط
+    // کلاس‌های خودش را می‌بیند؛ پذیرش و امور مالی کاری به برنامهٔ کلاس ندارند
+    Route::livewire('/schedule', 'pages::schedule.index')
+        ->middleware('role:admin,deputy,teacher')
+        ->name('schedule.index');
+
     // اساتید و حقوق: فقط مدیر و معاون. امور مالی دسترسی ندارد چون حقوق
     // همان‌جاست و دبیر نباید لیست حقوق را ببیند.
     Route::livewire('/teachers', 'pages::teachers.index')

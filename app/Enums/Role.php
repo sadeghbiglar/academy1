@@ -51,7 +51,7 @@ enum Role: string
             ],
             // دبیر: کلاس‌های خودش و نمره همان‌ها. نه لیست اساتید، نه حقوق، نه ثبت‌نام
             self::Teacher => [
-                Section::Dashboard, Section::MyCourses, Section::Attendance, Section::Grades, Section::Profile,
+                Section::Dashboard, Section::MyCourses, Section::Schedule, Section::Attendance, Section::Grades, Section::Profile,
             ],
             // پذیرش: ثبت‌نام و فاکتور اولیه
             self::Reception => [

@@ -82,6 +82,7 @@ enum Section: string
             self::Users => 'users.index',
             self::Courses => 'courses.index',
             self::Attendance => 'attendance.index',
+            self::Schedule => 'schedule.index',
             self::Profile => 'profile',
             default => null,
         };

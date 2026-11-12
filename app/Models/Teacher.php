@@ -48,6 +48,17 @@ class Teacher extends Model
     }
 
     /**
+     * نام کامل استاد.
+     *
+     * به‌صورت accessor نه ستون: اگر ذخیره می‌شد، تغییر نام باید در دو ستون و
+     * همین‌جا همزمان اصلاح می‌شد و فیشِ حقوقیِ چاپ‌شده با رکورد نمی‌خواند.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
+
+    /**
      * نیم‌رخ پرسنلی.
      *
      * یک‌به‌یک و نه hasMany: دو نیم‌رخ برای یک استاد یعنی دو شمارهٔ بیمه و دو

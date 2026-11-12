@@ -23,6 +23,7 @@ enum Section: string
     case Schedule = 'schedule';
     case Attendance = 'attendance';
     case Grades = 'grades';
+    case Payrolls = 'payrolls';    // حقوق و دستمزد اساتید
     case Finance = 'finance';
     case Reports = 'reports';
     case Settings = 'settings';
@@ -42,6 +43,7 @@ enum Section: string
             self::Schedule => 'زمان‌بندی',
             self::Attendance => 'حضور و غیاب',
             self::Grades => 'نمرات',
+            self::Payrolls => 'حقوق',
             self::Finance => 'مالی',
             self::Reports => 'گزارش‌ها',
             self::Settings => 'تنظیمات',
@@ -63,6 +65,7 @@ enum Section: string
             self::Schedule => '🗓️',
             self::Attendance => '✅',
             self::Grades => '📝',
+            self::Payrolls => '💵',
             self::Finance => '💰',
             self::Reports => '📊',
             self::Settings => '⚙️',
@@ -82,6 +85,7 @@ enum Section: string
             self::Users => 'users.index',
             self::Courses => 'courses.index',
             self::Attendance => 'attendance.index',
+            self::Payrolls => 'payrolls.index',
             self::Schedule => 'schedule.index',
             self::Profile => 'profile',
             default => null,
@@ -111,6 +115,7 @@ enum Section: string
             self::Schedule,
             self::Attendance,
             self::Grades,
+            self::Payrolls,
             self::Finance,
             self::Reports,
             self::Settings,

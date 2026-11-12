@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -118,6 +119,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/profit-and-loss', [ReportController::class, 'profitAndLoss'])
         ->middleware('role:admin,finance')
         ->name('reports.profit-and-loss');
+
+    // حقوق و دستمزد اساتید: مانند فهرست اساتید، فقط مدیر و معاون.
+    // امور مالی به حقوق دسترسی ندارد (همان قاعدهٔ صفحهٔ اساتید) و دبیر هم
+    // نباید حقوق خودش و بقیه را ببیند.
+    Route::livewire('/payrolls', 'pages::payrolls.index')
+        ->middleware('role:admin,deputy')
+        ->name('payrolls.index');
+
+    // فیش حقوقی چاپی؛ بدون layout پنل، مثل چاپ فاکتور
+    Route::get('/payrolls/{payroll}/print', [PayrollController::class, 'print'])
+        ->middleware('role:admin,deputy')
+        ->name('payroll.print');
 
     Route::livewire('/profile', 'pages::profile.index')->name('profile');
 

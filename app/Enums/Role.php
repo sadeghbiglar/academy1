@@ -43,7 +43,7 @@ enum Role: string
             self::Deputy => [
                 Section::Dashboard, Section::Students, Section::Teachers, Section::Subjects,
                 Section::Courses, Section::Enrollments, Section::Schedule, Section::Attendance,
-                Section::Grades, Section::Reports, Section::Profile,
+                Section::Grades, Section::Payrolls, Section::Reports, Section::Profile,
             ],
             // امور مالی وضعیت دانش‌آموز را می‌بیند (بدهی)، ولی نمره و برنامه درسش کار او نیست
             self::Finance => [

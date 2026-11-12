@@ -91,6 +91,12 @@ class Student extends Model
         return $this->hasMany(Grade::class);
     }
 
+    /** رخدادهای انضباطی دانش‌آموز؛ ترتیب نمایش را صفحه تعیین می‌کند. */
+    public function disciplines(): HasMany
+    {
+        return $this->hasMany(Discipline::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

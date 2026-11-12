@@ -106,6 +106,14 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy')
         ->name('reports.teacher-hours');
 
+    // گزارش انضباط بازه‌ای: همان نقش‌هایی که پرونده را می‌بینند و ثبت می‌کنند.
+    // پذیرش و امور مالی پرونده را باز می‌کنند ولی رفتار دانش‌آموز کار آن‌ها
+    // نیست، و دبیر هم پروندهٔ عمومی باز نمی‌کند — گزارشِ همهٔ آموزشگاه برایش
+    // نشت اطلاعات است نه سهولت.
+    Route::livewire('/reports/discipline', 'pages::reports.discipline')
+        ->middleware('role:admin,deputy')
+        ->name('reports.discipline');
+
     // صورت سود و زیان: فقط مدیر و امور مالی. معاون آموزشی به هزینه‌ها دسترسی ندارد.
     Route::get('/reports/profit-and-loss', [ReportController::class, 'profitAndLoss'])
         ->middleware('role:admin,finance')

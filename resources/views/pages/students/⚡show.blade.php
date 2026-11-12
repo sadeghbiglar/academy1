@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\DisciplineType;
 use App\Enums\EnrollmentStatus;
 use App\Enums\Section;
 use App\Models\Attendance;
+use App\Models\Discipline;
 use App\Models\Student;
 use App\Services\AttendanceThreshold;
 use App\Services\WeightedAverage;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -16,6 +19,18 @@ class extends Component {
     use Toast;
 
     public int $studentId;
+
+    /**
+     * فرم ثبت انضباط در همین پرونده.
+     *
+     * disciplineDate همیشه میلادی ISO است؛ شمسی‌دیدنش کار picker است، نه این
+     * property — وگرنه ذخیره و نمایش دو تاریخ می‌شدند.
+     */
+    public string $disciplineType = DisciplineType::Warning->value;
+
+    public string $disciplineNote = '';
+
+    public string $disciplineDate = '';
 
     /**
      * ستون‌های جدول فاکتورها به‌صورت key/label.
@@ -36,6 +51,8 @@ class extends Component {
     public function mount(int $student): void
     {
         $this->studentId = $student;
+        // امروز پیش‌فرض می‌شود: رخداد انضباطی معمولاً همان روز ثبت می‌شود
+        $this->disciplineDate = now()->toDateString();
     }
 
     #[Computed]
@@ -108,6 +125,88 @@ class extends Component {
             ->orderBy('type')
             ->orderBy('title')
             ->get();
+    }
+
+    /** رخدادهای انضباطی پرونده، جدیدترین اول. */
+    #[Computed]
+    public function disciplines()
+    {
+        return $this->student->disciplines()
+            ->with('user')
+            ->orderByDesc('occurred_on')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /** گزینه‌های select نوع؛ در ویو فقط از $this صدا زده می‌شود. */
+    public function disciplineOptions(): array
+    {
+        return DisciplineType::options();
+    }
+
+    /**
+     * ثبت یک رخداد انضباطی در پرونده.
+     *
+     * تاریخِ شمسیِ تایپ‌شده باید پیش از اعتبارسنجی میلادی شود، وگرنه قاعدهٔ
+     * date_format روی شکلِ نمایشی شکست می‌خورد یا بدتر: تاریخ شمسی در DB
+     * می‌نشیند و بازهٔ گزارش به‌هم می‌ریزد. نامعتبر هم نباید بی‌صدا تبدیل شود —
+     * خطای فارسی می‌گیرد و چیزی ذخیره نمی‌شود.
+     */
+    public function storeDiscipline(): void
+    {
+        // پنهان کردن فرم در ویو کافی نیست: بدون این، پذیرش با فراخوانی مستقیم
+        // می‌توانست در پروندهٔ آموزشی رکورد بگذارد
+        abort_unless($this->seesAcademic(), 403);
+
+        if (! $this->normalizeDisciplineDate()) {
+            $this->addError('disciplineDate', 'تاریخ شمسی نامعتبر است. نمونه درست: ۱۴۰۴/۰۸/۲۱');
+
+            return;
+        }
+
+        $this->validate([
+            'disciplineType' => ['required', Rule::enum(DisciplineType::class)],
+            'disciplineNote' => ['required', 'string', 'max:1000'],
+            'disciplineDate' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        Discipline::record(
+            $this->student,
+            DisciplineType::from($this->disciplineType),
+            trim($this->disciplineNote),
+            $this->disciplineDate,
+        );
+
+        $this->disciplineType = DisciplineType::Warning->value;
+        $this->disciplineNote = '';
+        $this->disciplineDate = now()->toDateString();
+
+        $this->success('رخداد انضباطی ثبت شد.');
+    }
+
+    /** @return bool آیا تاریخ به میلادیِ درست رسید؟ خالی = درست، ولی بعداً required ردش می‌کند. */
+    private function normalizeDisciplineDate(): bool
+    {
+        $value = trim($this->disciplineDate);
+
+        // از قبل میلادی ISO است — همان را نگه می‌دار
+        if ($value === '' || preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1) {
+            return true;
+        }
+
+        try {
+            $converted = miladi_date($value);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+
+        if ($converted === null) {
+            return false;
+        }
+
+        $this->disciplineDate = $converted;
+
+        return true;
     }
 
     public function render()
@@ -315,6 +414,56 @@ class extends Component {
                             @endscope
                         </x-table>
                     @endif
+                </x-card>
+            @endif
+
+            {{-- انضباط و رفتار: فقط نقش‌های آموزشی. امور مالی و پذیرش پرونده را
+                 باز می‌کنند ولی رفتار دانش‌آموز کار آن‌ها نیست، پس نه فرم دیده
+                 می‌شود نه فهرست — و ثبت سمت سرور هم بسته است. --}}
+            @if ($this->seesAcademic())
+                <x-card title="انضباط و رفتار" class="mt-4">
+                    <form wire:submit="storeDiscipline" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                        <x-select
+                            label="نوع"
+                            wire:model="disciplineType"
+                            :options="$this->disciplineOptions()"
+                            option-value="id"
+                            option-label="name"
+                            placeholder="انتخاب نوع"
+                            error="disciplineType" />
+
+                        <x-input
+                            label="شرح"
+                            type="text"
+                            wire:model="disciplineNote"
+                            placeholder="چه اتفاقی افتاد؟"
+                            maxlength="1000"
+                            error="disciplineNote" />
+
+                        {{-- تنها راه ورود تاریخ؛ کاربر فقط شمسی می‌بیند (R2) --}}
+                        <livewire:jalali-date-picker wire:model.live="disciplineDate" label="تاریخ رخداد (شمسی)" />
+
+                        <div class="pb-1">
+                            <x-button label="ثبت رفتار" type="submit" class="btn-primary" />
+                        </div>
+                    </form>
+
+                    <div class="divider"></div>
+
+                    @forelse ($this->disciplines as $record)
+                        <div class="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-base-200 last:border-0 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="badge {{ $record->typeColor() }} badge-sm">{{ $record->typeLabel() }}</span>
+                                <span>{{ $record->description }}</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs opacity-70">
+                                <span>{{ to_persian_digits($record->occurredOnJalali()) }}</span>
+                                <span>ثبت‌کننده: {{ $record->user?->display_name ?? '—' }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm opacity-60">هنوز رخدادی ثبت نشده است.</p>
+                    @endforelse
                 </x-card>
             @endif
 

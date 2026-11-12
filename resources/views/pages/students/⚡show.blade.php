@@ -2,9 +2,11 @@
 
 use App\Enums\DisciplineType;
 use App\Enums\EnrollmentStatus;
+use App\Enums\PreviousStatus;
 use App\Enums\Section;
 use App\Models\Attendance;
 use App\Models\Discipline;
+use App\Models\PreviousEnrollment;
 use App\Models\Student;
 use App\Services\AttendanceThreshold;
 use App\Services\WeightedAverage;
@@ -31,6 +33,22 @@ class extends Component {
     public string $disciplineNote = '';
 
     public string $disciplineDate = '';
+
+    /**
+     * فرم رونویس (سوابق تحصیلی قبلی).
+     *
+     * prevYear رشته است نه عدد: کاربر «۱۴۰۳» با ارقام فارسی تایپ می‌کند و
+     * تبدیلِ آن (parse_integer) کار storePreviousEnrollment است، نه ویو.
+     */
+    public string $prevSchool = '';
+
+    public string $prevYear = '';
+
+    public string $prevGrade = '';
+
+    public string $prevGrades = '';
+
+    public string $prevStatus = '';
 
     /**
      * ستون‌های جدول فاکتورها به‌صورت key/label.
@@ -207,6 +225,69 @@ class extends Component {
         $this->disciplineDate = $converted;
 
         return true;
+    }
+
+    /** سوابق تحصیلی قبلی، جدیدترین سال اول. */
+    #[Computed]
+    public function previousEnrollments()
+    {
+        return $this->student->previousEnrollments()
+            ->orderByDesc('academic_year')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /** گزینه‌های select پایه و وضعیت؛ در ویو فقط از $this صدا زده می‌شوند. */
+    public function prevGradeOptions(): array
+    {
+        return PreviousEnrollment::levels();
+    }
+
+    public function prevStatusOptions(): array
+    {
+        return PreviousStatus::options();
+    }
+
+    /**
+     * ثبت رونویس (سوابق تحصیلی قبلی) در پرونده.
+     *
+     * «۱۴۰۳» باید پیش از اعتبارسنجی عدد شود: قاعدهٔ numeric روی ارقام فارسی
+     * شکست می‌خورد در حالی که ورودی کاملاً درست است، و ذخیرهٔ خامش هم در ستون
+     * integer ممکن نیست. ورودیِ غیرعددی هم باید همان بماند تا قاعده آن را رد
+     * کند، نه اینکه بی‌صدا صفر یا خالی شود.
+     */
+    public function storePreviousEnrollment(): void
+    {
+        // همان قاعدهٔ انضباط: پنهان کردن فرم در ویو امنیت نیست
+        abort_unless($this->seesAcademic(), 403);
+
+        $year = parse_integer($this->prevYear);
+        $this->prevYear = $year === null ? trim($this->prevYear) : (string) $year;
+
+        $this->validate([
+            'prevSchool' => ['required', 'string', 'max:150'],
+            'prevYear' => ['required', 'integer', 'between:1300,1500'],
+            'prevGrade' => ['required', 'string', Rule::in(array_column(PreviousEnrollment::levels(), 'id'))],
+            'prevGrades' => ['nullable', 'string', 'max:2000'],
+            'prevStatus' => ['required', Rule::enum(PreviousStatus::class)],
+        ]);
+
+        PreviousEnrollment::record(
+            $this->student,
+            trim($this->prevSchool),
+            (int) $this->prevYear,
+            $this->prevGrade,
+            trim($this->prevGrades) ?: null,
+            PreviousStatus::from($this->prevStatus),
+        );
+
+        $this->prevSchool = '';
+        $this->prevYear = '';
+        $this->prevGrade = '';
+        $this->prevGrades = '';
+        $this->prevStatus = '';
+
+        $this->success('سوابق تحصیلی قبلی ثبت شد.');
     }
 
     public function render()
@@ -414,6 +495,77 @@ class extends Component {
                             @endscope
                         </x-table>
                     @endif
+                </x-card>
+            @endif
+
+            {{-- سوابق تحصیلی قبلی (رونویس): همان قاعدهٔ انضباط — فقط نقش‌های
+                 آموزشی، با بسته بودن ثبت سمت سرور برای بقیه. --}}
+            @if ($this->seesAcademic())
+                <x-card title="سوابق تحصیلی قبلی" class="mt-4">
+                    <form wire:submit="storePreviousEnrollment" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+                        <x-input
+                            label="مدرسه"
+                            type="text"
+                            wire:model="prevSchool"
+                            placeholder="نام مدرسهٔ قبلی"
+                            maxlength="150"
+                            error="prevSchool" />
+
+                        {{-- شمسی و ارقام فارسی؛ تبدیل به عدد کار storePreviousEnrollment است --}}
+                        <x-input
+                            label="سال تحصیلی (شمسی)"
+                            type="text"
+                            wire:model="prevYear"
+                            placeholder="۱۴۰۳"
+                            error="prevYear" />
+
+                        <x-select
+                            label="پایه"
+                            wire:model="prevGrade"
+                            :options="$this->prevGradeOptions()"
+                            option-value="id"
+                            option-label="name"
+                            placeholder="انتخاب پایه"
+                            error="prevGrade" />
+
+                        <x-textarea
+                            label="نمرات قبلی"
+                            wire:model="prevGrades"
+                            placeholder="مثلاً ریاضی ۱۸، علوم ۱۷"
+                            error="prevGrades" />
+
+                        <x-select
+                            label="وضعیت فارغ‌التحصیلی"
+                            wire:model="prevStatus"
+                            :options="$this->prevStatusOptions()"
+                            option-value="id"
+                            option-label="name"
+                            placeholder="انتخاب وضعیت"
+                            error="prevStatus" />
+
+                        <div class="pb-1">
+                            <x-button label="ثبت رونویس" type="submit" class="btn-primary" />
+                        </div>
+                    </form>
+
+                    <div class="divider"></div>
+
+                    @forelse ($this->previousEnrollments as $entry)
+                        <div class="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-base-200 last:border-0 text-sm">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="badge {{ $entry->statusColor() }} badge-sm">{{ $entry->statusLabel() }}</span>
+                                <span class="font-medium">{{ $entry->school }}</span>
+                                <span class="text-xs opacity-70">
+                                    سال {{ $entry->yearLabel() }} — {{ $entry->gradeLabel() }}
+                                </span>
+                            </div>
+                            <span class="text-xs opacity-70">
+                                {{ $entry->previous_grades ?: 'بدون کارنامهٔ قبلی' }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-sm opacity-60">سوابق تحصیلی قبلی ثبت نشده است.</p>
+                    @endforelse
                 </x-card>
             @endif
 

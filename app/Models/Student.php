@@ -97,6 +97,14 @@ class Student extends Model
         return $this->hasMany(Discipline::class);
     }
 
+    /** سوابق تحصیلی قبلی (رونویس)؛ یک دانش‌آموز ممکن است چند مدرسهٔ قبلی داشته باشد. */
+    public function previousEnrollments(): HasMany
+    {
+        // کلید خارجی باید صریح باشد: لاراول از نام مدل «previous_enrollment_id»
+        // حدس می‌زند که وجود ندارد و رابطه بی‌صدا خالی برمی‌گرداند
+        return $this->hasMany(PreviousEnrollment::class, 'student_id');
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TranscriptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +42,13 @@ Route::middleware('auth')->group(function () {
     Route::livewire('/students/{student}', 'pages::students.show')
         ->middleware('role:admin,deputy,finance,reception')
         ->name('students.show');
+
+    // کارنامهٔ رسمی چاپی؛ بدون layout پنل، مثل چاپ فاکتور و فیش حقوقی.
+    // نقش‌ها همان نقش‌های بخش نمرات‌اند (Role::sections): امور مالی و پذیرش
+    // نمره نمی‌بینند، پس کارنامه هم نمی‌گیرند.
+    Route::get('/students/{student}/transcript', [TranscriptController::class, 'print'])
+        ->middleware('role:admin,deputy,teacher')
+        ->name('students.transcript.print');
 
     // دوره‌ها: مدیر، معاون (ثبت‌نام و ارزیابی)، پذیرش (ثبت‌نام و فاکتور) و
     // دبیر برای «کلاس‌های خودش». امور مالی دوره را می‌بیند ولی ویرایشش نه.

@@ -314,6 +314,16 @@ class extends Component {
                         </p>
                     </div>
                     <div class="flex items-center gap-2">
+                        @if ($this->seesAcademic())
+                            {{-- کارنامه در پنجرهٔ جدا باز می‌شود: پرونده‌ای که
+                                 کاربر وسطش است نباید با باز شدن سند از بین برود --}}
+                            <a
+                                href="{{ route('students.transcript.print', $student) }}"
+                                target="_blank"
+                                rel="noopener"
+                                class="btn btn-sm btn-outline"
+                            >کارنامهٔ رسمی</a>
+                        @endif
                         @if ($profile)
                             <span class="badge {{ $profile->statusColor() }}">{{ $profile->statusLabel() }}</span>
                         @else

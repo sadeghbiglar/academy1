@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-12",
+  "updated": "2026-11-25",
   "rules": {
     "branch": "academy",
     "release_branch": "main",
@@ -14,6 +14,7 @@
     "one_issue_per_commit": true
   },
   "done": [
+    37,
     40,
     38,
     36,
@@ -51,11 +52,6 @@
   ],
   "in_progress": null,
   "next": [
-    {
-      "issue": 37,
-      "title": "کارنامه رسمی PDF",
-      "why": "R4 — سند رسمی با ریزنمرات، ساعات، وضعیت و امضا."
-    },
     {
       "issue": 51,
       "title": "کارنامه نهایی دوره",

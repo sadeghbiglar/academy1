@@ -131,9 +131,13 @@ class Transcript
      * ترتیب الفبایی نوع (continuous، final، homework…) نمای نمرات را به هم می‌ریزد؛
      * ترتیب enum همان ترتیبی است که میانگین هم با آن کار می‌کند.
      *
+     * عمومی است چون کارنامهٔ نهایی دوره (issue #51) هم همین ریزنمرات را با همین
+     * ترتیب چاپ می‌کند؛ دو ترتیب متفاوت روی دو سندِ از یک نمره ساخته‌شده،
+     * سندی است که با خودش نمی‌خواند.
+     *
      * @return Collection<int, Grade>
      */
-    private function grades(Student $student, Course $course)
+    public function grades(Student $student, Course $course)
     {
         $order = array_flip(array_map(
             fn (GradeType $type) => $type->value,

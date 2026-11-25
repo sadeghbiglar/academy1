@@ -140,4 +140,27 @@ class Attendance extends Model
 
         return round($attended / $counted->count() * 100, 2);
     }
+
+    /**
+     * ساعت حضور واقعی یک دانش‌آموز در یک دوره — چیزی که کارنامهٔ نهایی چاپ می‌کند.
+     *
+     * ساعت دوره (session_count × مدت) می‌گوید «قرار بود چقدر باشد»؛ این عدد
+     * می‌گوید «چقدر بوده». فقط جلسه‌هایی که دانش‌آموز در آن‌ها بوده (حاضر یا
+     * با تأخیر) ساعت می‌سازند؛ غیبت و غیبت موجه ساعت صفر دارند — وگرنه
+     * کارنامه به کسی که نیامده ساعتِ حضور تحویل می‌دهد.
+     *
+     * جلسهٔ بدون تاریخ (الگوی هفتگی) هم حساب می‌شود چون مدتِ آن مشخص است؛
+     * بر خلاف درصد حضور، اینجا به تاریخِ برگزاری نیازی نیست.
+     */
+    public static function attendedHoursFor(Student $student, Course $course): float
+    {
+        $rows = self::query()
+            ->where('student_id', $student->id)
+            ->whereHas('classSession', fn ($q) => $q->where('course_id', $course->id))
+            ->with('classSession')
+            ->get()
+            ->filter(fn (self $row) => $row->attended());
+
+        return round($rows->sum(fn (self $row) => $row->classSession->durationMinutes()) / 60, 2);
+    }
 }

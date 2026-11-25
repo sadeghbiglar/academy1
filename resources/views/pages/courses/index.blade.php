@@ -272,6 +272,18 @@
                 </div>
 
                 <div class="modal-action">
+                    {{-- سند در پنجرهٔ جدا باز می‌شود: مودالِ باز نباید با باز
+                         شدن کارنامه از بین برود. لینک فقط جایی می‌آید که
+                         نقش اجازهٔ دیدن نمره را دارد — لینکِ مرده برای امور
+                         مالی و پذیرش، دعوت به خطای ۴۰۳ است. --}}
+                    @if (auth()->user()?->canSee(\App\Enums\Section::Grades))
+                        <a
+                            href="{{ route('courses.transcript.print', $course) }}"
+                            target="_blank"
+                            rel="noopener"
+                            class="btn btn-outline"
+                        >کارنامهٔ نهایی دوره</a>
+                    @endif
                     <x-button label="بستن" class="btn-ghost" wire:click="closeView" />
                 </div>
             </div>

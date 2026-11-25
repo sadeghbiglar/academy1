@@ -56,6 +56,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,deputy,reception,teacher')
         ->name('courses.index');
 
+    // کارنامهٔ نهایی دوره: همان نقش‌های بخش نمرات. امور مالی و پذیرش دوره را
+    // می‌بینند ولی نمرهٔ دانش‌آموزان کار آن‌ها نیست، پس سندی که همهٔ نمرات
+    // یک کلاس را چاپ می‌کند را هم نمی‌گیرند.
+    Route::get('/courses/{course}/transcript', [TranscriptController::class, 'printCourse'])
+        ->middleware('role:admin,deputy,teacher')
+        ->name('courses.transcript.print');
+
     // حضور و غیاب روزانه: همان نقش‌هایی که بخش «حضور و غیاب» را می‌بینند
     // (Role::sections). پذیرش این‌جا نیست چون ثبت‌نام کار اوست نه حضور کلاس،
     // و امور مالی چون نمره و حضور کارش نیست.
